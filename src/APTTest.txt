@@ -1,0 +1,183 @@
+# TÀI LIỆU API HỆ THỐNG ĐẶT VÉ XE (QLDatVe)
+User (1) - (n) Bookings (Một-Nhiều)
+User (1) - (n) Feedbacks (Một-Nhiều)
+Route (1) - (n) Trips (Một-Nhiều)
+Vehicle (1) - (n) Trips (Một-Nhiều)
+Trip (1) - (n) Bookings (Một-Nhiều)
+Booking (1) - (n) BookingDetails (Một-Nhiều)
+Trip (1) - (n) Feedbacks (Một-Nhiều)
+
+
+# Cổng Backend: http://localhost:8081
+
+---
+## 1. API XÁC THỰC (AUTH)
+-- Không yêu cầu Token --
+
+### Đăng ký tài khoản (Gửi OTP)
+* **POST** `http://localhost:8081/api/auth/register`
+* **Body (JSON):**
+    ```json
+    {
+      "username": "ten_dang_nhap",
+      "password": "mat_khau_123",
+      "fullName": "Ten Day Du",
+      "email": "email@example.com",
+      "phone": "0909090909"
+    }
+    ```
+
+### Xác thực tài khoản (Dùng OTP)
+* **POST** `http://localhost:8081/api/auth/verify`
+* **Body (JSON):**
+    ```json
+    {
+      "email": "email@example.com",
+      "code": "12345"
+    }
+    ```
+
+### Đăng nhập
+* **POST** `http://localhost:8081/api/auth/login`
+* **Body (JSON):**
+    ```json
+    {
+      "username": "ten_dang_nhap",
+      "password": "mat_khau_123"
+    }
+    ```
+
+### Yêu cầu Quên Mật khẩu (Gửi OTP)
+* **POST** `http://localhost:8081/api/auth/forgot-password`
+* **Body (JSON):**
+    ```json
+    {
+      "email": "email@example.com"
+    }
+    ```
+
+### Đặt lại Mật khẩu (Dùng OTP)
+* **POST** `http://localhost:8081/api/auth/reset-password`
+* **Body (JSON):**
+    ```json
+    {
+      "email": "email@example.com",
+      "code": "54321",
+      "newPassword": "mat_khau_moi_456"
+    }
+    ```
+
+---
+## 2. API QUẢN TRỊ VIÊN (ADMIN)
+-- Yêu cầu "Authorization: Bearer <admin_token>" cho tất cả --
+
+### Quản lý Tuyến đường (Routes)
+* **GET** `http://localhost:8081/api/admin/routes` (Lấy tất cả)
+* **GET** `http://localhost:8081/api/admin/routes/{id}` (Lấy 1)
+* **POST** `http://localhost:8081/api/admin/routes` (Tạo mới)
+    ```json
+    {
+      "startLocation": "TP. Hồ Chí Minh",
+      "endLocation": "Đà Lạt",
+      "distanceKm": 300
+    }
+    ```
+* **PUT** `http://localhost:8081/api/admin/routes/{id}` (Cập nhật)
+* **DELETE** `http://localhost:8081/api/admin/routes/{id}` (Xóa)
+
+### Quản lý Xe (Vehicles)
+* **GET** `http://localhost:8081/api/admin/vehicles` (Lấy tất cả)
+* **POST** `http://localhost:8081/api/admin/vehicles` (Tạo mới)
+    ```json
+    {
+      "licensePlate": "51B-12345",
+      "vehicleType": "Giường nằm 40 chỗ",
+      "totalSeats": 40
+    }
+    ```
+* **PUT** `http://localhost:8081/api/admin/vehicles/{id}` (Cập nhật)
+* **DELETE** `http://localhost:8081/api/admin/vehicles/{id}` (Xóa)
+
+### Quản lý Chuyến đi (Trips)
+* **GET** `http://localhost:8081/api/admin/trips` (Lấy tất cả)
+* **POST** `http://localhost:8081/api/admin/trips` (Tạo mới)
+    ```json
+    {
+      "routeId": 1,
+      "vehicleId": 1,
+      "departureTime": "2025-10-25T08:00:00",
+      "arrivalTime": "2025-10-25T16:00:00",
+      "basePrice": 300000
+    }
+    ```
+* **PUT** `http://localhost:8081/api/admin/trips/{id}` (Cập nhật)
+* **DELETE** `http://localhost:8081/api/admin/trips/{id}` (Xóa)
+
+### Quản lý Người dùng (Users)
+* **GET** `http://localhost:8081/api/admin/users` (Lấy tất cả)
+* **PUT** `http://localhost:8081/api/admin/users/{id}` (Cập nhật quyền/trạng thái)
+    ```json
+    {
+      "role": "ADMIN",
+      "enabled": true
+    }
+    ```
+* **DELETE** `http://localhost:8081/api/admin/users/{id}` (Xóa user - Cẩn thận)
+
+### Quản lý Đặt vé (Bookings)
+* **GET** `http://localhost:8081/api/admin/bookings` (Lấy tất cả booking)
+
+### Quản lý Đánh giá (Feedback)
+* **GET** `http://localhost:8081/api/admin/feedback` (Lấy tất cả feedback)
+
+---
+## 3. API CÔNG KHAI (PUBLIC)
+-- Không yêu cầu Token --
+
+* **Tìm kiếm chuyến đi:**
+    `GET http://localhost:8081/api/trips/search?start_location=TP. Hồ Chí Minh&end_location=Đà Lạt&date=2025-10-25`
+* **Lấy tất cả chuyến đi (Trang chủ):**
+    `GET http://localhost:8081/api/trips`
+* **Xem chi tiết 1 chuyến đi:**
+    `GET http://localhost:8081/api/trips/{id}`
+* **Xem ghế đã đặt/chờ của chuyến:**
+    `GET http://localhost:8081/api/trips/{id}/booked-seats`
+* **Xem đánh giá của chuyến:**
+    `GET http://localhost:8081/api/trips/{id}/feedback`
+
+---
+## 4. API NGƯỜI DÙNG (USER)
+-- Yêu cầu "Authorization: Bearer <user_token>" cho tất cả --
+
+* **Đặt vé mới:**
+    `POST http://localhost:8081/api/bookings`
+    ```json
+    {
+      "tripId": 1,
+      "seatNumbers": ["A05", "A06"],
+      "paymentMethod": "MOMO" 
+    }
+    ```
+* **Xem lịch sử đặt vé (của tôi):**
+    `GET http://localhost:8081/api/bookings/my-bookings`
+* **Hủy vé:**
+    `PUT http://localhost:8081/api/bookings/{id}/cancel`
+* **Gửi đánh giá (Feedback):**
+    `POST http://localhost:8081/api/feedback`
+    ```json
+    {
+      "tripId": 1,
+      "rating": 5,
+      "comment": "Chuyến đi tuyệt vời!"
+    }
+    ```
+* **Tạo yêu cầu thanh toán MoMo:**
+    `POST http://localhost:8081/api/payment/momo/checkout/{bookingId}` (Thay `{bookingId}` bằng ID vé đang `PENDING`)
+
+---
+## 5. API WEBHOOK (TỪ MOMO)
+-- Không yêu cầu Token (Đã cấu hình permitAll) --
+
+* **MoMo IPN (Instant Payment Notification):**
+    `POST https://your-ngrok-url.ngrok-free.app/api/payment/momo-ipn`
+    *(Backend nhận request từ server MoMo tại URL này)*
