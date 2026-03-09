@@ -109,80 +109,84 @@ public class BookingService {
     }
 
     public void sendBookingConfirmationEmail(Booking booking, boolean isCashPayment) {
-        // --- SỬA LỖI "final" TẠI ĐÂY ---
-        // Gán 'booking' cho một biến mới (effectively final)
-        Booking bookingToSend = booking;
+    // 1. Tạo một biến tham chiếu cuối cùng để sử dụng trong lambda
+    Booking currentBooking = booking;
+    
+    // Kiểm tra dữ liệu bị thiếu (Lazy Loading)
+    if (currentBooking.getUser() == null || currentBooking.getTrip() == null || 
+        currentBooking.getTrip().getRoute() == null || currentBooking.getBookingDetails() == null) {
         
-        if (bookingToSend.getUser() == null || bookingToSend.getTrip() == null || bookingToSend.getTrip().getRoute() == null || bookingToSend.getBookingDetails() == null) {
-            logger.warn("Không thể gửi email cho Booking ID {}: Thiếu dữ liệu liên quan. Đang thử tải lại...", bookingToSend.getBookingId());
-             
-             final Integer bookingIdToReload = bookingToSend.getBookingId(); // Biến final
-             Booking reloadedBooking = bookingRepository.findAllWithDetails().stream()
-                .filter(b -> b.getBookingId().equals(bookingIdToReload)) // Sử dụng biến final
-                .findFirst()
-                .orElse(null);
-             
-             if(reloadedBooking == null || reloadedBooking.getUser() == null) {
-                 logger.error("Không thể gửi email cho Booking ID {}: Vẫn thiếu dữ liệu sau khi tải lại.", bookingIdToReload);
-                 return;
-             }
-             bookingToSend = reloadedBooking; // Gán lại
+        logger.warn("Thiếu dữ liệu cho Booking ID {}. Đang tải lại từ DB...", currentBooking.getBookingId());
+         
+        // 2. Cố định ID bằng biến final để dùng trong stream/lambda
+        final Integer bookingIdToReload = currentBooking.getBookingId(); 
+        
+        // Tối ưu: Nên viết thêm phương thức findByIdWithDetails trong Repository
+        // Ở đây tạm sửa lỗi biên dịch dựa trên code cũ của bạn:
+        currentBooking = bookingRepository.findAllWithDetails().stream()
+            .filter(b -> b.getBookingId().equals(bookingIdToReload))
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Không tìm thấy dữ liệu vé sau khi tải lại: " + bookingIdToReload));
+         
+        if(currentBooking.getUser() == null) {
+            logger.error("Vẫn thiếu thông tin User cho vé ID {}", bookingIdToReload);
+            return;
         }
-        // --- HẾT SỬA LỖI ---
-
-        User user = bookingToSend.getUser();
-        Trip trip = bookingToSend.getTrip();
-        String seatNumbers = bookingToSend.getBookingDetails().stream().map(BookingDetail::getSeatNumber).collect(Collectors.joining(", "));
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm 'ngày' dd/MM/yyyy");
-        String subject = "Xác nhận đặt vé thành công - Mã vé #" + bookingToSend.getBookingId();
-
-        String paymentInfo;
-        if (isCashPayment) {
-            paymentInfo = String.format(
-                "Phương thức thanh toán: Tiền mặt\n" +
-                "Trạng thái: ĐÃ XÁC NHẬN\n"+
-                "Vui lòng thanh toán số tiền %,.0f VND cho nhà xe khi lên xe.",
-                bookingToSend.getTotalAmount()
-            );
-        } else {
-            paymentInfo = String.format(
-                "Phương thức thanh toán: MoMo\n" +
-                "Trạng thái: ĐÃ THANH TOÁN (Mã GD MoMo: %s)",
-                 bookingToSend.getMomoOrderId() != null ? bookingToSend.getMomoOrderId() : "N/A"
-            );
-        }
-
-        String body = String.format(
-            "Kính chào %s,\n\n" +
-            "Cảm ơn bạn đã đặt vé tại hệ thống của chúng tôi!\n\n" +
-            "Thông tin chi tiết vé:\n" +
-            "- Mã vé: #%d\n" +
-            "- Tuyến đường: %s → %s\n" +
-            "- Thời gian khởi hành: %s\n" +
-            "- Thời gian dự kiến đến: %s\n" +
-            "- Ghế đã đặt: %s\n" +
-            "- Tổng tiền: %,.0f VND\n" +
-            "- %s\n\n" +
-            "Lưu ý:\n" +
-            "- Vui lòng đến trước 30 phút để làm thủ tục lên xe\n" +
-            "- Mang theo CMND/CCCD để đối chiếu khi cần\n" +
-            "- Vé này đã được xác nhận và hợp lệ\n\n" +
-            "Trân trọng,\n" +
-            "Đội ngũ hỗ trợ hệ thống đặt vé",
-            user.getFullName(), 
-            bookingToSend.getBookingId(),
-            trip.getRoute().getStartLocation(), 
-            trip.getRoute().getEndLocation(),
-            trip.getDepartureTime().format(formatter), 
-            trip.getArrivalTime().format(formatter),
-            seatNumbers, 
-            bookingToSend.getTotalAmount(), 
-            paymentInfo
-        );
-
-        emailService.sendEmail(user.getEmail(), subject, body);
-        logger.info("✅ Confirmation email sent cho Booking ID: {}", bookingToSend.getBookingId());
     }
+
+    // Sử dụng biến currentBooking sau khi đã đảm bảo đầy đủ dữ liệu
+    User user = currentBooking.getUser();
+    Trip trip = currentBooking.getTrip();
+    String seatNumbers = currentBooking.getBookingDetails().stream()
+            .map(BookingDetail::getSeatNumber)
+            .collect(Collectors.joining(", "));
+            
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm 'ngày' dd/MM/yyyy");
+    String subject = "Xác nhận đặt vé thành công - Mã vé #" + currentBooking.getBookingId();
+
+    String paymentInfo;
+    if (isCashPayment) {
+        paymentInfo = String.format(
+            "Phương thức thanh toán: Tiền mặt\n" +
+            "Trạng thái: ĐÃ XÁC NHẬN\n"+
+            "Vui lòng thanh toán số tiền %,.0f VND cho nhà xe khi lên xe.",
+            currentBooking.getTotalAmount()
+        );
+    } else {
+        paymentInfo = String.format(
+            "Phương thức thanh toán: MoMo\n" +
+            "Trạng thái: ĐÃ THANH TOÁN (Mã GD MoMo: %s)",
+             currentBooking.getMomoOrderId() != null ? currentBooking.getMomoOrderId() : "N/A"
+        );
+    }
+
+    String body = String.format(
+        "Kính chào %s,\n\n" +
+        "Cảm ơn bạn đã đặt vé tại hệ thống của chúng tôi!\n\n" +
+        "Thông tin chi tiết vé:\n" +
+        "- Mã vé: #%d\n" +
+        "- Tuyến đường: %s → %s\n" +
+        "- Thời gian khởi hành: %s\n" +
+        "- Thời gian dự kiến đến: %s\n" +
+        "- Ghế đã đặt: %s\n" +
+        "- Tổng tiền: %,.0f VND\n" +
+        "- %s\n\n" +
+        "Trân trọng,\n" +
+        "Đội ngũ hỗ trợ hệ thống đặt vé",
+        user.getFullName(), 
+        currentBooking.getBookingId(),
+        trip.getRoute().getStartLocation(), 
+        trip.getRoute().getEndLocation(),
+        trip.getDepartureTime().format(formatter), 
+        trip.getArrivalTime().format(formatter),
+        seatNumbers, 
+        currentBooking.getTotalAmount(), 
+        paymentInfo
+    );
+
+    emailService.sendEmail(user.getEmail(), subject, body);
+    logger.info("✅ Email xác nhận đã gửi thành công cho ID: {}", currentBooking.getBookingId());
+}
 
     public List<Booking> getMyBookings(User user) {
         if (user == null || user.getUserId() == null) {

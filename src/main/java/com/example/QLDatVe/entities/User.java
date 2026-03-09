@@ -2,9 +2,7 @@ package com.example.QLDatVe.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,6 +14,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "users")
 @Data
+@Builder // Hỗ trợ khởi tạo nhanh trong Unit Test
 @NoArgsConstructor
 @AllArgsConstructor
 public class User implements UserDetails {
@@ -43,31 +42,32 @@ public class User implements UserDetails {
     @Column(name = "role", nullable = false, length = 20)
     private String role;
     
-    // --- CÁC TRƯỜNG MỚI ĐỂ XÁC THỰC BẰNG MÃ OTP ---
-    
     @Column(name = "enabled")
-    private boolean enabled = false; // Mặc định là 'false'
+    @Builder.Default 
+    private boolean enabled = false; 
 
     @Column(name = "verification_token")
-    private String verificationCode; // Mã 5 số để kích hoạt
+    private String verificationCode; 
 
     @Column(name = "password_reset_token")
-    private String passwordResetCode; // Mã 5 số để reset pass
+    private String passwordResetCode; 
 
     @Column(name = "token_expiry_date")
-    private LocalDateTime tokenExpiryDate; // Hạn dùng của mã
-    
-    // --- HẾT TRƯỜNG MỚI ---
+    private LocalDateTime tokenExpiryDate; 
 
     @JsonIgnore
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Feedback> feedbacks;
 
-    
-    // --- Các phương thức bắt buộc của UserDetails ---
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @JsonIgnore 
+    private List<Booking> bookings;
+
+    // --- Các phương thức UserDetails ---
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+        // Đảm bảo trả về role hợp lệ cho Spring Security
         return List.of(new SimpleGrantedAuthority(this.role));
     }
 
@@ -98,10 +98,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        // Trả về trạng thái 'enabled' (true/false)
         return this.enabled; 
     }
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY) // User không cần EAGER
-    @JsonIgnore // Không serialize bookings khi trả về user
-    private List<Booking> bookings;
 }
