@@ -49,8 +49,11 @@ public class BookingSafetyTest {
         // Setup dữ liệu chuẩn để test logic chạy thật
         validUser = new User();
         validUser.setUserId(1);
+        validUser.setUsername("test-user");
         validUser.setEmail("test@email.com");
         validUser.setFullName("Test User");
+        validUser.setRole("ROLE_USER");
+        validUser.setEnabled(true);
 
         Route route = new Route();
         route.setStartLocation("Hanoi");
@@ -60,6 +63,7 @@ public class BookingSafetyTest {
         validTrip.setTripId(1);
         validTrip.setBasePrice(BigDecimal.valueOf(100000));
         validTrip.setDepartureTime(LocalDateTime.now().plusDays(1));
+        validTrip.setArrivalTime(LocalDateTime.now().plusDays(1).plusHours(6));
         validTrip.setRoute(route);
     }
 
@@ -143,7 +147,7 @@ public class BookingSafetyTest {
             reqB.setTripId(1);
             reqB.setSeatNumbers(Arrays.asList("D02", "D03")); // Trùng D02
             reqB.setPaymentMethod("CASH");
-            try { bookingService.createBooking(reqB, new User()); } catch (Exception e) {}
+            try { bookingService.createBooking(reqB, buildUser(2, "User B")); } catch (Exception e) {}
         };
 
         runCustomRace(taskA, taskB); // KHI CHẠY SẼ BÁO FAILED NẾU CODE CHO LƯU TRÙNG
@@ -218,9 +222,10 @@ public class BookingSafetyTest {
         CountDownLatch latch = new CountDownLatch(threads);
 
         for (int i = 0; i < threads; i++) {
+            final int userId = i + 1;
             executor.submit(() -> {
                 try {
-                    bookingService.createBooking(req, new User());
+                    bookingService.createBooking(req, buildUser(userId, "Concurrent User " + userId));
                 } catch (Exception e) {
                 } finally {
                     latch.countDown();
@@ -248,5 +253,16 @@ public class BookingSafetyTest {
             System.err.println("!!! BUG DETECTED: Overlap Booking Failed - Cả 2 người đều mua được ghế trùng nhau !!!");
             throw e;
         } 
+    }
+
+    private User buildUser(int userId, String fullName) {
+        User user = new User();
+        user.setUserId(userId);
+        user.setUsername("user" + userId);
+        user.setFullName(fullName);
+        user.setEmail("user" + userId + "@example.com");
+        user.setRole("ROLE_USER");
+        user.setEnabled(true);
+        return user;
     }
 }
