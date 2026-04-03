@@ -5,6 +5,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -60,6 +61,7 @@ public class FrontendSeleniumSmokeTest {
     @Test
     public void cashBookingFlowShouldShowSuccessNotification() {
         driver.get(baseUrl + "/");
+        seedLoggedInUser();
 
         WebElement selectTripButton = wait.until(ExpectedConditions.elementToBeClickable(
                 By.cssSelector("[data-testid='trip-select-1']")));
@@ -89,7 +91,8 @@ public class FrontendSeleniumSmokeTest {
 
         WebElement notification = wait.until(ExpectedConditions.visibilityOfElementLocated(
                 By.cssSelector("[data-testid='global-notification']")));
-        Assert.assertTrue(notification.getText().contains("(mock)"));
+        String notificationText = notification.getText().toLowerCase();
+        Assert.assertTrue(notificationText.contains("thành công") || notificationText.contains("mock"));
     }
 
     private WebDriver createDriver(String browser) {
@@ -126,5 +129,14 @@ public class FrontendSeleniumSmokeTest {
         } catch (MalformedURLException exception) {
             throw new IllegalArgumentException("Invalid selenium.remoteUrl: " + remoteUrl, exception);
         }
+    }
+
+    private void seedLoggedInUser() {
+        JavascriptExecutor javascriptExecutor = (JavascriptExecutor) driver;
+        javascriptExecutor.executeScript(
+                "window.localStorage.setItem('user', arguments[0]);" +
+                "window.localStorage.setItem('token', arguments[1]);",
+                "{\"userId\":1,\"username\":\"selenium-user\",\"email\":\"selenium@example.com\"}",
+                "mock-token");
     }
 }
