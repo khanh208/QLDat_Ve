@@ -13,9 +13,12 @@ import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
+import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.Duration;
 import java.util.List;
 
@@ -90,22 +93,38 @@ public class FrontendSeleniumSmokeTest {
     }
 
     private WebDriver createDriver(String browser) {
+        String remoteUrl = System.getProperty("selenium.remoteUrl");
+
         return switch (browser) {
             case "firefox" -> {
                 FirefoxOptions options = new FirefoxOptions();
                 options.addArguments("-headless");
-                yield new FirefoxDriver(options);
+                yield remoteUrl != null && !remoteUrl.isBlank()
+                        ? buildRemoteDriver(remoteUrl, options)
+                        : new FirefoxDriver(options);
             }
             case "edge" -> {
                 EdgeOptions options = new EdgeOptions();
                 options.addArguments("--headless=new", "--no-sandbox", "--disable-dev-shm-usage");
-                yield new EdgeDriver(options);
+                yield remoteUrl != null && !remoteUrl.isBlank()
+                        ? buildRemoteDriver(remoteUrl, options)
+                        : new EdgeDriver(options);
             }
             default -> {
                 ChromeOptions options = new ChromeOptions();
                 options.addArguments("--headless=new", "--no-sandbox", "--disable-dev-shm-usage");
-                yield new ChromeDriver(options);
+                yield remoteUrl != null && !remoteUrl.isBlank()
+                        ? buildRemoteDriver(remoteUrl, options)
+                        : new ChromeDriver(options);
             }
         };
+    }
+
+    private WebDriver buildRemoteDriver(String remoteUrl, Object options) {
+        try {
+            return new RemoteWebDriver(new URL(remoteUrl), (org.openqa.selenium.Capabilities) options);
+        } catch (MalformedURLException exception) {
+            throw new IllegalArgumentException("Invalid selenium.remoteUrl: " + remoteUrl, exception);
+        }
     }
 }

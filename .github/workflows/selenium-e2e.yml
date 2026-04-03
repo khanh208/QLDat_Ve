@@ -10,10 +10,22 @@ permissions:
 jobs:
   selenium-smoke:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        browser: [chrome, firefox]
+        include:
+          - browser: chrome
+            selenium_image: selenium/standalone-chrome:latest
+          - browser: firefox
+            selenium_image: selenium/standalone-firefox:latest
+
+    services:
+      selenium:
+        image: ${{ matrix.selenium_image }}
+        ports:
+          - 4444:4444
+        options: --shm-size=2g
 
     steps:
       - name: Checkout source
@@ -33,14 +45,6 @@ jobs:
           cache: npm
           cache-dependency-path: qldatve-frontend/package-lock.json
 
-      - name: Install Chrome
-        if: matrix.browser == 'chrome'
-        uses: browser-actions/setup-chrome@v1
-
-      - name: Install Firefox
-        if: matrix.browser == 'firefox'
-        uses: browser-actions/setup-firefox@v1
-
       - name: Install frontend dependencies
         working-directory: qldatve-frontend
         run: npm ci
@@ -57,7 +61,7 @@ jobs:
         working-directory: qldatve-frontend
         shell: bash
         env:
-          CI: "true"
+          CI: "false"
           BROWSER: "none"
           HOST: "127.0.0.1"
           PORT: "3000"
@@ -65,10 +69,16 @@ jobs:
         run: |
           nohup npm start > ../frontend.log 2>&1 &
 
-      - name: Wait for mock API and frontend
+      - name: Wait for Selenium, mock API, and frontend
         shell: bash
         run: |
           set -euo pipefail
+
+          for i in {1..60}; do
+            curl -fsS http://127.0.0.1:4444/status > /dev/null && break
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:4444/status > /dev/null
 
           for i in {1..60}; do
             curl -fsS http://127.0.0.1:8081/api/trips > /dev/null && break
@@ -83,10 +93,17 @@ jobs:
           curl -fsS http://127.0.0.1:3000 > /dev/null
 
       - name: Run Selenium smoke tests
-        run: ./mvnw -B -Dtest=FrontendSeleniumSmokeTest -Dselenium.browser=${{ matrix.browser }} -Dselenium.baseUrl=http://127.0.0.1:3000 test
+        shell: bash
+        run: |
+          ./mvnw -B \
+            "-Dtest=FrontendSeleniumSmokeTest" \
+            "-Dselenium.browser=${{ matrix.browser }}" \
+            "-Dselenium.baseUrl=http://127.0.0.1:3000" \
+            "-Dselenium.remoteUrl=http://127.0.0.1:4444" \
+            test
 
-      - name: Upload logs on failure
-        if: failure()
+      - name: Upload Selenium and app logs
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: selenium-logs-${{ matrix.browser }}

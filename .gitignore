@@ -31,3 +31,11 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Automation logs ###
+frontend.log
+mock-api.log
+frontend-local.log
+frontend-local.err
+mock-api-local.log
+mock-api-local.err
