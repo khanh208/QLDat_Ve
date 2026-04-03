@@ -126,25 +126,26 @@ function LoginPage() {
                     alignItems: 'center',
                 }}
             >
-                <Typography component="h1" variant="h5">
+                <Typography component="h1" variant="h5" data-testid="login-page-title">
                     Đăng nhập
                 </Typography>
                 
                 {/* ✅ Hiển thị thông báo redirect nếu có */}
                 {from !== '/' && (
-                    <Alert severity="info" sx={{ width: '100%', mt: 2 }}>
+                    <Alert data-testid="login-redirect-alert" severity="info" sx={{ width: '100%', mt: 2 }}>
                         Vui lòng đăng nhập để tiếp tục
                     </Alert>
                 )}
 
                 <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: '100%' }}>
                     {error && (
-                        <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
+                        <Alert data-testid="login-error-alert" severity="error" sx={{ width: '100%', mb: 2 }}>
                             {error}
                         </Alert>
                     )}
 
                     <TextField
+                        inputProps={{ 'data-testid': 'login-username-input' }}
                         margin="normal"
                         required
                         fullWidth
@@ -158,6 +159,7 @@ function LoginPage() {
                         disabled={loading}
                     />
                     <TextField
+                        inputProps={{ 'data-testid': 'login-password-input' }}
                         margin="normal"
                         required
                         fullWidth
@@ -172,6 +174,7 @@ function LoginPage() {
                     />
 
                     <Button
+                        data-testid="login-submit-button"
                         type="submit"
                         fullWidth
                         variant="contained"

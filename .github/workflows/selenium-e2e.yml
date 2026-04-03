@@ -58,7 +58,7 @@ jobs:
           MOCK_API_HOST: "0.0.0.0"
           FRONTEND_BASE_URL: "http://host.docker.internal:3000"
         run: |
-          nohup node tests/e2e/mock-api-server.js > mock-api.log 2>&1 &
+          nohup node tests/e2e/mock-api-server-ci.js > mock-api.log 2>&1 &
 
       - name: Start React frontend
         working-directory: qldatve-frontend
@@ -113,4 +113,5 @@ jobs:
           path: |
             frontend.log
             mock-api.log
+            target/selenium-screenshots/**
             target/surefire-reports/**

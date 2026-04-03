@@ -296,7 +296,11 @@ function MyBookingsPage() {
                     }
 
                     return (
-                        <Card key={booking.bookingId} sx={{ mb: 2, border: 1, borderColor: 'divider' }}>
+                        <Card
+                            key={booking.bookingId}
+                            data-testid={`booking-card-${booking.bookingId}`}
+                            sx={{ mb: 2, border: 1, borderColor: 'divider' }}
+                        >
                             <CardContent>
                                 <Grid container spacing={2} alignItems="center">
                                     <Grid item xs={12} sm={8}>
@@ -334,6 +338,7 @@ function MyBookingsPage() {
                                     <Grid item xs={12} sm={4}>
                                         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: { xs: 'flex-start', sm: 'flex-end' }, gap: 1 }}>
                                             <Chip
+                                                data-testid={`booking-status-${booking.bookingId}`}
                                                 label={statusLabel}
                                                 color={statusColor}
                                                 variant={statusVariant}
@@ -344,6 +349,7 @@ function MyBookingsPage() {
                                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 1 }}>
                                                 {booking.status === 'CONFIRMED' && (
                                                     <Button
+                                                        data-testid={`booking-cancel-${booking.bookingId}`}
                                                         variant="outlined"
                                                         color="error"
                                                         size="small"
@@ -356,6 +362,7 @@ function MyBookingsPage() {
                                                 
                                                 {booking.status === 'PENDING' && (
                                                     <Button
+                                                        data-testid={`booking-momo-pay-${booking.bookingId}`}
                                                         variant="contained"
                                                         sx={{
                                                             backgroundColor: '#a50064',
@@ -459,11 +466,12 @@ function MyBookingsPage() {
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-            <Typography variant="h4" gutterBottom component="h1" sx={{ fontWeight: 'bold' }}>
+            <Typography variant="h4" gutterBottom component="h1" sx={{ fontWeight: 'bold' }} data-testid="my-bookings-title">
                 📋 Lịch sử Đặt vé của tôi
             </Typography>
 
             <Button 
+                data-testid="my-bookings-refresh-button"
                 variant="outlined" 
                 onClick={() => fetchMyBookings()}
                 disabled={loading}
@@ -480,12 +488,12 @@ function MyBookingsPage() {
             )}
 
             {cancelError && (
-                <Alert severity="error" sx={{ mb: 2 }} onClose={() => setCancelError('')}>
+                <Alert data-testid="my-bookings-error-alert" severity="error" sx={{ mb: 2 }} onClose={() => setCancelError('')}>
                     {cancelError}
                 </Alert>
             )}
             {cancelSuccess && (
-                <Alert severity="success" sx={{ mb: 2 }} onClose={() => setCancelSuccess('')}>
+                <Alert data-testid="my-bookings-success-alert" severity="success" sx={{ mb: 2 }} onClose={() => setCancelSuccess('')}>
                     {cancelSuccess}
                 </Alert>
             )}

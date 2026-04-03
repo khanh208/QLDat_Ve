@@ -166,7 +166,7 @@ function PaymentSuccessPage() {
     return (
         <Container maxWidth="sm" sx={{ mt: 5, mb: 5 }}>
             <Paper elevation={3} sx={{ p: 4 }}>
-                <Typography variant="h4" gutterBottom align="center" sx={{ fontWeight: 'bold' }}>
+                <Typography variant="h4" gutterBottom align="center" sx={{ fontWeight: 'bold' }} data-testid="payment-success-title">
                     Kết quả Thanh toán MoMo
                 </Typography>
 
@@ -187,7 +187,7 @@ function PaymentSuccessPage() {
                         <CheckCircleOutlineIcon 
                             sx={{ fontSize: 80, color: 'success.main' }} 
                         />
-                        <Alert severity="success" sx={{ mt: 2, mb: 2 }}>
+                        <Alert data-testid="payment-success-alert" severity="success" sx={{ mt: 2, mb: 2 }}>
                             {statusMessage}
                         </Alert>
                         <Typography variant="body1" color="text.secondary">
@@ -210,7 +210,7 @@ function PaymentSuccessPage() {
                         <ErrorOutlineIcon 
                             sx={{ fontSize: 80, color: 'error.main' }} 
                         />
-                        <Alert severity="error" sx={{ mt: 2, mb: 2 }}>
+                        <Alert data-testid="payment-failure-alert" severity="error" sx={{ mt: 2, mb: 2 }}>
                             {statusMessage}
                         </Alert>
                         {error && (
@@ -285,6 +285,7 @@ function PaymentSuccessPage() {
                 {/* Action Buttons */}
                 <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
                     <Button 
+                        data-testid="payment-success-my-bookings-button"
                         component={Link} 
                         to="/my-bookings" 
                         variant="contained" 
