@@ -251,7 +251,7 @@ function shouldSimulateDuplicateSeatBug(paymentMethod, seatNumbers) {
 
   return (
     (normalizedPaymentMethod === 'CASH' && normalizedSeats.includes('D2')) ||
-    (normalizedPaymentMethod === 'MOMO' && normalizedSeats.includes('C2'))
+    (normalizedPaymentMethod === 'MOMO' && normalizedSeats.includes('A2'))
   );
 }
 

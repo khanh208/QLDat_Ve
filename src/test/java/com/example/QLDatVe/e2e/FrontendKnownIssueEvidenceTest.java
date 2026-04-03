@@ -83,56 +83,83 @@ public class FrontendKnownIssueEvidenceTest {
     }
 
     @Test
-    public void duplicateCashSeatShouldBeRejectedButBothUsersCanBook() throws Exception {
+    public void tc03_overlapSeatCash_shouldRejectOneBooking() throws Exception {
         resetMockState();
 
-        openTripAndSeedUser(primaryDriver, primaryWait, 1, "cash-user-1", "cash1@example.com");
-        openTripAndSeedUser(secondaryDriver, secondaryWait, 2, "cash-user-2", "cash2@example.com");
+        openTripAndSeedUser(primaryDriver, primaryWait, 1, "tc03-user-a", "tc03a@example.com");
+        openTripAndSeedUser(secondaryDriver, secondaryWait, 2, "tc03-user-b", "tc03b@example.com");
 
-        selectSeat(primaryDriver, primaryWait, "D2");
-        selectSeat(secondaryDriver, secondaryWait, "D2");
+        selectSeats(primaryDriver, primaryWait, "D1", "D2");
+        selectSeats(secondaryDriver, secondaryWait, "D2", "C2");
         choosePaymentMethod(primaryDriver, primaryWait, "cash");
         choosePaymentMethod(secondaryDriver, secondaryWait, "cash");
 
-        captureCheckpointScreenshot(primaryDriver, "booking", "duplicate-cash-before-submit-user-1");
-        captureCheckpointScreenshot(secondaryDriver, "booking", "duplicate-cash-before-submit-user-2");
+        captureCheckpointScreenshot(primaryDriver, "booking", "TC03-before-submit-user-a");
+        captureCheckpointScreenshot(secondaryDriver, "booking", "TC03-before-submit-user-b");
 
         boolean firstUserSucceeded = submitCashBookingAndDetectSuccess(primaryDriver, primaryWait);
         boolean secondUserSucceeded = submitCashBookingAndDetectSuccess(secondaryDriver, secondaryWait);
 
-        captureCheckpointScreenshot(primaryDriver, "booking", "duplicate-cash-after-submit-user-1");
-        captureCheckpointScreenshot(secondaryDriver, "booking", "duplicate-cash-after-submit-user-2");
+        captureCheckpointScreenshot(primaryDriver, "booking", "TC03-after-submit-user-a");
+        captureCheckpointScreenshot(secondaryDriver, "booking", "TC03-after-submit-user-b");
 
         Assert.assertFalse(
-                "Known issue reproduced: both users booked seat D2 successfully with CASH.",
+                "TC03 failed as expected: both bookings containing overlapping seat D2 were accepted.",
                 firstUserSucceeded && secondUserSucceeded
         );
     }
 
     @Test
-    public void duplicateMomoSeatShouldBeRejectedButBothUsersReachPaymentSuccess() throws Exception {
+    public void tc02_sameSeatMomo_shouldRejectOneBooking() throws Exception {
         resetMockState();
 
-        openTripAndSeedUser(primaryDriver, primaryWait, 3, "momo-user-1", "momo1@example.com");
-        openTripAndSeedUser(secondaryDriver, secondaryWait, 4, "momo-user-2", "momo2@example.com");
+        openTripAndSeedUser(primaryDriver, primaryWait, 3, "tc02-user-a", "tc02a@example.com");
+        openTripAndSeedUser(secondaryDriver, secondaryWait, 4, "tc02-user-b", "tc02b@example.com");
 
-        selectSeat(primaryDriver, primaryWait, "C2");
-        selectSeat(secondaryDriver, secondaryWait, "C2");
+        selectSeats(primaryDriver, primaryWait, "A2");
+        selectSeats(secondaryDriver, secondaryWait, "A2");
         choosePaymentMethod(primaryDriver, primaryWait, "momo");
         choosePaymentMethod(secondaryDriver, secondaryWait, "momo");
 
-        captureCheckpointScreenshot(primaryDriver, "payment", "duplicate-momo-before-submit-user-1");
-        captureCheckpointScreenshot(secondaryDriver, "payment", "duplicate-momo-before-submit-user-2");
+        captureCheckpointScreenshot(primaryDriver, "payment", "TC02-before-submit-user-a");
+        captureCheckpointScreenshot(secondaryDriver, "payment", "TC02-before-submit-user-b");
 
         boolean firstUserReachedSuccess = submitMomoBookingAndReachPaymentSuccess(primaryDriver, primaryWait);
         boolean secondUserReachedSuccess = submitMomoBookingAndReachPaymentSuccess(secondaryDriver, secondaryWait);
 
-        captureCheckpointScreenshot(primaryDriver, "payment", "duplicate-momo-after-submit-user-1");
-        captureCheckpointScreenshot(secondaryDriver, "payment", "duplicate-momo-after-submit-user-2");
+        captureCheckpointScreenshot(primaryDriver, "payment", "TC02-after-submit-user-a");
+        captureCheckpointScreenshot(secondaryDriver, "payment", "TC02-after-submit-user-b");
 
         Assert.assertFalse(
-                "Known issue reproduced: both users reached payment success for seat C2 with MOMO.",
+                "TC02 failed as expected: both users reached MOMO success for the same seat A2.",
                 firstUserReachedSuccess && secondUserReachedSuccess
+        );
+    }
+
+    @Test
+    public void tc24_differentSeatsCash_shouldAllowBothBookings() throws Exception {
+        resetMockState();
+
+        openTripAndSeedUser(primaryDriver, primaryWait, 5, "tc24-user-a", "tc24a@example.com");
+        openTripAndSeedUser(secondaryDriver, secondaryWait, 6, "tc24-user-b", "tc24b@example.com");
+
+        selectSeats(primaryDriver, primaryWait, "A2");
+        selectSeats(secondaryDriver, secondaryWait, "C1");
+        choosePaymentMethod(primaryDriver, primaryWait, "cash");
+        choosePaymentMethod(secondaryDriver, secondaryWait, "cash");
+
+        captureCheckpointScreenshot(primaryDriver, "booking", "TC24-before-submit-user-a");
+        captureCheckpointScreenshot(secondaryDriver, "booking", "TC24-before-submit-user-b");
+
+        boolean firstUserSucceeded = submitCashBookingAndDetectSuccess(primaryDriver, primaryWait);
+        boolean secondUserSucceeded = submitCashBookingAndDetectSuccess(secondaryDriver, secondaryWait);
+
+        captureCheckpointScreenshot(primaryDriver, "booking", "TC24-after-submit-user-a");
+        captureCheckpointScreenshot(secondaryDriver, "booking", "TC24-after-submit-user-b");
+
+        Assert.assertTrue(
+                "TC24 should pass: two users booking different seats must both succeed.",
+                firstUserSucceeded && secondUserSucceeded
         );
     }
 
@@ -209,11 +236,13 @@ public class FrontendKnownIssueEvidenceTest {
                 "mock-token-" + userId);
     }
 
-    private void selectSeat(WebDriver driver, WebDriverWait wait, String seatNumber) {
-        wait.until(ExpectedConditions.elementToBeClickable(
-                By.cssSelector("[data-testid='seat-" + seatNumber + "']"))).click();
-        wait.until(ExpectedConditions.textToBePresentInElementLocated(
-                By.cssSelector("[data-testid='selected-seats-summary']"), seatNumber));
+    private void selectSeats(WebDriver driver, WebDriverWait wait, String... seatNumbers) {
+        for (String seatNumber : seatNumbers) {
+            wait.until(ExpectedConditions.elementToBeClickable(
+                    By.cssSelector("[data-testid='seat-" + seatNumber + "']"))).click();
+            wait.until(ExpectedConditions.textToBePresentInElementLocated(
+                    By.cssSelector("[data-testid='selected-seats-summary']"), seatNumber));
+        }
     }
 
     private void choosePaymentMethod(WebDriver driver, WebDriverWait wait, String paymentMethod) {
