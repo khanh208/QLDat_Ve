@@ -5,6 +5,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.openqa.selenium.By;
@@ -37,6 +38,10 @@ public class FrontendSeleniumSmokeTest {
     private WebDriverWait wait;
     private String baseUrl;
     private String browserName;
+    private int screenshotCounter;
+
+    @Rule
+    public TestName currentTestName = new TestName();
 
     @Rule
     public TestWatcher screenshotOnFailure = new TestWatcher() {
@@ -50,6 +55,7 @@ public class FrontendSeleniumSmokeTest {
     public void setUp() {
         String browser = System.getProperty("selenium.browser", "chrome").toLowerCase();
         browserName = browser;
+        screenshotCounter = 1;
         baseUrl = System.getProperty("selenium.baseUrl", "http://127.0.0.1:3000");
         driver = createDriver(browser);
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(2));
@@ -74,6 +80,7 @@ public class FrontendSeleniumSmokeTest {
 
         Assert.assertFalse(title.getText().isBlank());
         Assert.assertFalse(tripCards.isEmpty());
+        captureCheckpointScreenshot("home", "trip-results");
     }
 
     @Test
@@ -96,6 +103,7 @@ public class FrontendSeleniumSmokeTest {
         WebElement summary = wait.until(ExpectedConditions.visibilityOfElementLocated(
                 By.cssSelector("[data-testid='selected-seats-summary']")));
         Assert.assertTrue(summary.getText().contains("B1"));
+        captureCheckpointScreenshot("booking", "cash-seat-selected");
 
         WebElement cashOption = wait.until(ExpectedConditions.elementToBeClickable(
                 By.cssSelector("[data-testid='payment-cash-option']")));
@@ -111,6 +119,7 @@ public class FrontendSeleniumSmokeTest {
                 By.cssSelector("[data-testid='global-notification']")));
         String notificationText = notification.getText().toLowerCase();
         Assert.assertTrue(notificationText.contains("thành công") || notificationText.contains("mock"));
+        captureCheckpointScreenshot("booking", "cash-booking-success");
     }
 
     @Test
@@ -122,6 +131,7 @@ public class FrontendSeleniumSmokeTest {
 
         Assert.assertEquals("booked", bookedSeat.getAttribute("data-seat-status"));
         Assert.assertTrue(driver.findElements(By.cssSelector("[data-testid='selected-seats-summary']")).isEmpty());
+        captureCheckpointScreenshot("booking", "booked-seat-unavailable");
     }
 
     @Test
@@ -135,6 +145,7 @@ public class FrontendSeleniumSmokeTest {
                 By.cssSelector("[data-testid='login-page-title']")));
 
         Assert.assertFalse(loginTitle.getText().isBlank());
+        captureCheckpointScreenshot("auth", "login-redirect");
     }
 
     @Test
@@ -153,6 +164,7 @@ public class FrontendSeleniumSmokeTest {
         Assert.assertFalse(title.getText().isBlank());
         Assert.assertTrue(bookingCard.getText().contains("#701"));
         Assert.assertFalse(bookingStatus.getText().isBlank());
+        captureCheckpointScreenshot("my-bookings", "bookings-list");
     }
 
     @Test
@@ -189,6 +201,7 @@ public class FrontendSeleniumSmokeTest {
                         || webDriver.getCurrentUrl().contains("/my-bookings"));
 
         Assert.assertFalse(paymentTitle.getText().isBlank());
+        captureCheckpointScreenshot("payment", "momo-payment-success");
     }
 
     private WebDriver createDriver(String browser) {
@@ -244,24 +257,66 @@ public class FrontendSeleniumSmokeTest {
     }
 
     private void captureFailureScreenshot(String testName) {
+        captureScreenshot("fail", inferComponentFromTestName(testName), testName + "-FAIL");
+    }
+
+    private void captureCheckpointScreenshot(String component, String checkpoint) {
+        String testMethod = currentTestName.getMethodName() == null ? "unknown-test" : currentTestName.getMethodName();
+        String label = String.format("%02d-%s-%s", screenshotCounter++, testMethod, checkpoint);
+        captureScreenshot("pass", component, label);
+    }
+
+    private void captureScreenshot(String status, String component, String label) {
         if (driver == null || !(driver instanceof TakesScreenshot)) {
             return;
         }
 
         try {
-            Path screenshotDirectory = Path.of("target", "selenium-screenshots");
+            Path screenshotDirectory = Path.of(
+                    "target",
+                    "selenium-screenshots",
+                    sanitizeForFileName(status),
+                    sanitizeForFileName(component));
             Files.createDirectories(screenshotDirectory);
 
-            String safeBrowser = (browserName == null || browserName.isBlank()) ? "unknown" : browserName;
-            String fileName = safeBrowser + "-" + testName + "-" + System.currentTimeMillis() + ".png";
+            String safeBrowser = sanitizeForFileName(browserName == null || browserName.isBlank() ? "unknown" : browserName);
+            String safeLabel = sanitizeForFileName(label);
+            String fileName = safeBrowser + "-" + safeLabel + "-" + System.currentTimeMillis() + ".png";
             Path screenshotPath = screenshotDirectory.resolve(fileName);
 
             Path tempScreenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE).toPath();
             Files.copy(tempScreenshot, screenshotPath, StandardCopyOption.REPLACE_EXISTING);
 
-            System.out.println("Saved Selenium failure screenshot to: " + screenshotPath.toAbsolutePath());
+            System.out.println("Saved Selenium screenshot to: " + screenshotPath.toAbsolutePath());
         } catch (Exception exception) {
-            System.err.println("Unable to capture Selenium failure screenshot: " + exception.getMessage());
+            System.err.println("Unable to capture Selenium screenshot: " + exception.getMessage());
         }
+    }
+
+    private String sanitizeForFileName(String value) {
+        return value.replaceAll("[^a-zA-Z0-9._-]", "_");
+    }
+
+    private String inferComponentFromTestName(String testName) {
+        if (testName == null || testName.isBlank()) {
+            return "unknown";
+        }
+        String normalized = testName.toLowerCase();
+        if (normalized.contains("home")) {
+            return "home";
+        }
+        if (normalized.contains("login") || normalized.contains("unauthenticated") || normalized.contains("auth")) {
+            return "auth";
+        }
+        if (normalized.contains("mybookings")) {
+            return "my-bookings";
+        }
+        if (normalized.contains("momo") || normalized.contains("payment")) {
+            return "payment";
+        }
+        if (normalized.contains("booking") || normalized.contains("seat")) {
+            return "booking";
+        }
+        return "unknown";
     }
 }
