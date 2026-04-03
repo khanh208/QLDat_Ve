@@ -1,0 +1,118 @@
+name: Selenium Known Issues Evidence
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  selenium-known-issues:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - browser: chrome
+            selenium_image: selenium/standalone-chrome:latest
+          - browser: firefox
+            selenium_image: selenium/standalone-firefox:latest
+
+    services:
+      selenium:
+        image: ${{ matrix.selenium_image }}
+        ports:
+          - 4444:4444
+        options: --shm-size=2g --add-host=host.docker.internal:host-gateway
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: qldatve-frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: qldatve-frontend
+        run: npm ci
+
+      - name: Make Maven wrapper executable
+        run: chmod +x mvnw
+
+      - name: Start mock API server
+        shell: bash
+        env:
+          MOCK_API_HOST: "0.0.0.0"
+          FRONTEND_BASE_URL: "http://host.docker.internal:3000"
+        run: |
+          nohup node tests/e2e/mock-api-server-ci.js > mock-api.log 2>&1 &
+
+      - name: Start React frontend
+        working-directory: qldatve-frontend
+        shell: bash
+        env:
+          CI: "false"
+          BROWSER: "none"
+          HOST: "0.0.0.0"
+          PORT: "3000"
+          REACT_APP_API_BASE_URL: "http://host.docker.internal:8081/api"
+        run: |
+          nohup npm start > ../frontend.log 2>&1 &
+
+      - name: Wait for Selenium, mock API, and frontend
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for i in {1..60}; do
+            curl -fsS http://127.0.0.1:4444/status > /dev/null && break
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:4444/status > /dev/null
+
+          for i in {1..60}; do
+            curl -fsS http://127.0.0.1:8081/api/trips > /dev/null && break
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:8081/api/trips > /dev/null
+
+          for i in {1..60}; do
+            curl -fsS http://127.0.0.1:3000 > /dev/null && break
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:3000 > /dev/null
+
+      - name: Run known-issue Selenium evidence tests
+        continue-on-error: true
+        shell: bash
+        run: |
+          ./mvnw -B \
+            "-Dtest=FrontendKnownIssueEvidenceTest" \
+            "-Dselenium.browser=${{ matrix.browser }}" \
+            "-Dselenium.baseUrl=http://host.docker.internal:3000" \
+            "-Dselenium.apiBaseUrl=http://127.0.0.1:8081/api" \
+            "-Dselenium.remoteUrl=http://127.0.0.1:4444" \
+            test
+
+      - name: Upload known-issue artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: selenium-known-issues-${{ matrix.browser }}
+          path: |
+            frontend.log
+            mock-api.log
+            target/selenium-screenshots/**
+            target/surefire-reports/**

@@ -76,6 +76,62 @@ const users = [
   },
 ];
 
+const initialBookedSeats = [
+  [1, ['A1', 'B2']],
+  [2, ['D1']],
+];
+
+const initialBookingsSeed = [
+  {
+    bookingId: 701,
+    tripId: 1,
+    status: 'CONFIRMED',
+    seatNumbers: ['B2'],
+    paymentMethod: 'CASH',
+    extra: {
+      bookingTime: '2026-04-02T08:30:00',
+    },
+  },
+  {
+    bookingId: 702,
+    tripId: 2,
+    status: 'PENDING',
+    seatNumbers: ['D1'],
+    paymentMethod: 'MOMO',
+    extra: {
+      bookingTime: '2026-04-02T11:15:00',
+      momoOrderId: 'ORD-702',
+      momoRequestId: 'REQ-702',
+    },
+  },
+];
+
+function createBookedSeatsMap() {
+  return new Map(initialBookedSeats.map(([tripId, seats]) => [tripId, new Set(seats)]));
+}
+
+function createInitialBookings() {
+  return initialBookingsSeed.map((item) =>
+    buildBooking(
+      item.bookingId,
+      item.tripId,
+      item.status,
+      item.seatNumbers,
+      item.paymentMethod,
+      item.extra
+    ));
+}
+
+function resetMockState() {
+  bookings.length = 0;
+  bookings.push(...createInitialBookings());
+
+  bookedSeatsByTrip.clear();
+  createBookedSeatsMap().forEach((value, key) => bookedSeatsByTrip.set(key, value));
+
+  bookingIdCounter = 900;
+}
+
 function findTrip(tripId) {
   return trips.find((trip) => trip.tripId === tripId);
 }
@@ -189,6 +245,16 @@ function handleTripSearch(url, res) {
   sendJson(res, 200, filteredTrips);
 }
 
+function shouldSimulateDuplicateSeatBug(paymentMethod, seatNumbers) {
+  const normalizedPaymentMethod = String(paymentMethod || '').toUpperCase();
+  const normalizedSeats = seatNumbers.map((seat) => String(seat || '').toUpperCase());
+
+  return (
+    (normalizedPaymentMethod === 'CASH' && normalizedSeats.includes('D2')) ||
+    (normalizedPaymentMethod === 'MOMO' && normalizedSeats.includes('C2'))
+  );
+}
+
 function handleBookingCreate(payload, res) {
   const tripId = Number(payload.tripId);
   const trip = findTrip(tripId);
@@ -207,14 +273,15 @@ function handleBookingCreate(payload, res) {
   }
 
   const bookedSeats = bookedSeatsByTrip.get(tripId) || new Set();
+  const paymentMethod = String(payload.paymentMethod || '').toUpperCase();
+  const simulateDuplicateSeatBug = shouldSimulateDuplicateSeatBug(paymentMethod, seatNumbers);
   const duplicateSeat = seatNumbers.find((seat) => bookedSeats.has(seat));
-  if (duplicateSeat) {
+  if (duplicateSeat && !simulateDuplicateSeatBug) {
     sendJson(res, 409, { message: `Seat ${duplicateSeat} is already held.` });
     return;
   }
 
   const bookingId = ++bookingIdCounter;
-  const paymentMethod = String(payload.paymentMethod || '').toUpperCase();
   addSeatsToHolding(tripId, seatNumbers);
 
   if (paymentMethod === 'CASH') {
@@ -222,7 +289,9 @@ function handleBookingCreate(payload, res) {
     sendJson(res, 200, {
       bookingId,
       status: 'CONFIRMED',
-      message: 'Cash booking mock success.',
+      message: simulateDuplicateSeatBug
+        ? 'Cash booking mock success (known issue duplicate seat reproduced).'
+        : 'Cash booking mock success.',
     });
     return;
   }
@@ -239,7 +308,9 @@ function handleBookingCreate(payload, res) {
     status: 'PENDING',
     momoOrderId,
     momoRequestId,
-    message: 'MoMo booking mock created.',
+    message: simulateDuplicateSeatBug
+      ? 'MoMo booking mock created (known issue duplicate seat reproduced).'
+      : 'MoMo booking mock created.',
   });
 }
 
@@ -360,6 +431,12 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (req.method === 'POST' && pathname === '/api/test/reset') {
+    resetMockState();
+    sendJson(res, 200, { message: 'Mock state reset successfully.' });
+    return;
+  }
+
   const tripRoute = matchTrip(pathname);
   if (req.method === 'GET' && tripRoute) {
     if (tripRoute.type === 'trip') {
@@ -448,5 +525,6 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(port, host, () => {
+  resetMockState();
   console.log(`Mock API server is listening on http://${host}:${port}`);
 });
