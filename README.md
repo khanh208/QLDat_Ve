@@ -43,6 +43,23 @@ powershell -ExecutionPolicy Bypass -File .\run-booking-automation.ps1
 
 Ket qua se duoc luu trong `Bao-cao-KTPM/automation-artifacts`.
 
+## Selenium E2E tren GitHub Actions
+
+- Workflow: `.github/workflows/selenium-e2e.yml`
+- Trigger: chay tu dong khi `push`
+- Browser matrix hien tai: `chrome`, `firefox`
+- Cach chay:
+  - dung mock API tai `tests/e2e/mock-api-server.js`
+  - bat frontend React tren `http://127.0.0.1:3000`
+  - chay Selenium smoke test `FrontendSeleniumSmokeTest`
+
+Test Selenium hien tai kiem tra nhanh:
+
+- Trang chu tai duoc danh sach chuyen di
+- Nguoi dung mo trang chi tiet chuyen
+- Chon ghe va dat ve tien mat tren UI mock
+- Hien thong bao thanh cong sau khi dat ve
+
 ## Tai lieu bao cao
 
 Mo file `Bao-cao-KTPM/README.md` de xem nhanh cac tai lieu chinh cua bai.

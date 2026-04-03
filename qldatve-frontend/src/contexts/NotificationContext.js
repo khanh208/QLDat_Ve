@@ -31,6 +31,7 @@ export function NotificationProvider({ children }) {
                     anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }} // Vị trí
                 >
                     <Alert
+                        data-testid="global-notification"
                         onClose={handleClose}
                         severity={notification.severity}
                         sx={{ width: '100%' }}

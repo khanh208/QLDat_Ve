@@ -300,6 +300,8 @@ function TripDetailPage() {
 
       seatComponents.push(
         <Chip
+          data-testid={`seat-${seatNumber}`}
+          data-seat-status={isBookedOrPending ? 'booked' : isSelected ? 'selected' : 'available'}
           key={seatNumber} label={seatNumber} clickable={clickable}
           color={chipColor} variant={chipVariant}
           onClick={() => clickable && handleSeatClick(seatNumber)}
@@ -361,7 +363,7 @@ function TripDetailPage() {
     <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
       {/* --- Section 1: Trip Info & Booking --- */}
       <Paper sx={{ p: 3 }} elevation={3}>
-        <Typography variant="h4" gutterBottom component="h1">
+        <Typography variant="h4" gutterBottom component="h1" data-testid="trip-detail-title">
           🚌 Chi tiết chuyến đi #{trip.tripId}
         </Typography>
 
@@ -407,16 +409,32 @@ function TripDetailPage() {
           </Box>
           {renderSeats()}
           {selectedSeats.length > 0 && (
-            <Typography sx={{ mt: 2, textAlign: 'center', fontWeight: 'medium' }}>
+            <Typography data-testid="selected-seats-summary" sx={{ mt: 2, textAlign: 'center', fontWeight: 'medium' }}>
               Ghế đang chọn: <strong>{selectedSeats.join(', ')}</strong> | Tổng tiền:{' '}
               <strong>{fmtVND(Number(trip.basePrice) * selectedSeats.length)} VND</strong>
             </Typography>
           )}
           <FormControl component="fieldset" sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
             <FormLabel component="legend">💳 Chọn phương thức thanh toán:</FormLabel>
-            <RadioGroup row name="paymentMethod" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
-              <FormControlLabel value="MOMO" control={<Radio />} label="Ví MoMo" />
-              <FormControlLabel value="CASH" control={<Radio />} label="Tiền mặt (Thanh toán khi lên xe)" />
+            <RadioGroup
+              row
+              name="paymentMethod"
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              data-testid="payment-method-group"
+            >
+              <FormControlLabel
+                data-testid="payment-momo-option"
+                value="MOMO"
+                control={<Radio inputProps={{ 'data-testid': 'payment-momo-radio' }} />}
+                label="Ví MoMo"
+              />
+              <FormControlLabel
+                data-testid="payment-cash-option"
+                value="CASH"
+                control={<Radio inputProps={{ 'data-testid': 'payment-cash-radio' }} />}
+                label="Tiền mặt (Thanh toán khi lên xe)"
+              />
             </RadioGroup>
           </FormControl>
           {paymentMethod === 'MOMO' && (
@@ -448,6 +466,7 @@ function TripDetailPage() {
           
           <Box sx={{ textAlign: 'center' }}>
             <Button
+              data-testid="booking-submit-button"
               variant="contained" size="large"
               sx={{
                 mt: 2, minWidth: '200px',

@@ -1,4 +1,8 @@
 {
+  "scripts": {
+    "e2e:mock-api": "node tests/e2e/mock-api-server.js",
+    "e2e:frontend": "npm --prefix qldatve-frontend start"
+  },
   "dependencies": {
     "chart.js": "^4.5.1",
     "react-chartjs-2": "^5.3.1",

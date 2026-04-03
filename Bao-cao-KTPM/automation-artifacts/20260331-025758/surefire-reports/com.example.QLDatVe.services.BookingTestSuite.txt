@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.example.QLDatVe.services.BookingTestSuite
+-------------------------------------------------------------------------------
+Tests run: 0, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.930 s -- in com.example.QLDatVe.services.BookingTestSuite

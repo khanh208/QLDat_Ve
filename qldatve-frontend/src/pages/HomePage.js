@@ -155,7 +155,7 @@ function HomePage() {
                 {/* --- RESULTS SECTION --- */}
                 <Container sx={{ py: 4, backgroundColor: '#f9f9f9' }} maxWidth="lg">
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                        <Typography variant="h5">
+                        <Typography variant="h5" data-testid="trip-results-title">
                             {isShowingAll ? 'Tất cả chuyến đi' : 'Các chuyến đi nổi bật'}
                         </Typography>
                         {!isShowingAll && (
@@ -174,7 +174,7 @@ function HomePage() {
                             {searching && <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}><CircularProgress size={30} /></Box>}
                             {searchError && !searching && (<Alert severity="warning" sx={{ mt: 2, mb: 2 }}>{searchError}</Alert>)}
 
-                            <Grid container spacing={3}>
+                            <Grid container spacing={3} data-testid="trip-results-grid">
                                 {displayedTrips.length === 0 && !searching ? (
                                     <Grid item xs={12}>
                                         <Typography align="center" color="text.secondary" sx={{ mt: 5 }}>
@@ -184,12 +184,16 @@ function HomePage() {
                                 ) : (
                                     displayedTrips.map((trip) => (
                                         <Grid item key={trip.tripId} xs={12} sm={6} md={4}>
-                                            <Card elevation={2} sx={{ height: '100%', display: 'flex', flexDirection: 'column', transition: 'transform 0.2s, box-shadow 0.2s', '&:hover': { transform: 'translateY(-4px)', boxShadow: 6 } }}>
+                                            <Card
+                                                data-testid={`trip-card-${trip.tripId}`}
+                                                elevation={2}
+                                                sx={{ height: '100%', display: 'flex', flexDirection: 'column', transition: 'transform 0.2s, box-shadow 0.2s', '&:hover': { transform: 'translateY(-4px)', boxShadow: 6 } }}
+                                            >
                                                 <CardContent sx={{ flexGrow: 1 }}>
                                                     {/* Route */}
                                                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                         <LocationOnIcon fontSize="small" sx={{ mr: 1, color: 'action.active' }} />
-                                                        <Typography variant="h6" component="div" noWrap>
+                                                        <Typography variant="h6" component="div" noWrap data-testid={`trip-route-${trip.tripId}`}>
                                                             {trip.route?.startLocation} - {trip.route?.endLocation}
                                                         </Typography>
                                                     </Box>
@@ -218,7 +222,13 @@ function HomePage() {
                                                 </CardContent>
                                                 <CardActions sx={{ justifyContent: 'flex-end', borderTop: '1px solid #eee' }}>
                                                     {/* Dùng Link của react-router-dom */}
-                                                    <Button size="small" component={Link} to={`/trips/${trip.tripId}`} variant="contained">
+                                                    <Button
+                                                        data-testid={`trip-select-${trip.tripId}`}
+                                                        size="small"
+                                                        component={Link}
+                                                        to={`/trips/${trip.tripId}`}
+                                                        variant="contained"
+                                                    >
                                                         Chọn chuyến
                                                     </Button>
                                                 </CardActions>

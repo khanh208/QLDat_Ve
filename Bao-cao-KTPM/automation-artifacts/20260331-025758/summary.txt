@@ -1,0 +1,9 @@
+suite=com.example.QLDatVe.services.BookingTestSuite
+run_dir=E:\NguyenQuocKhanh\tester\QLDat_Ve\QLDat_Ve\Bao-cao-KTPM\automation-artifacts\20260331-025758
+tests=30
+passed=22
+failures=8
+errors=0
+skipped=0
+exit_code=1
+mode=offline

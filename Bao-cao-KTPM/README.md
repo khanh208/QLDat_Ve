@@ -18,3 +18,10 @@ Thu muc nay chua tai lieu phuc vu bai bao cao kiem thu phan mem.
 - `automation-artifacts`: log va bao cao tu cac lan chay automation
 
 Mo `automation-artifacts/README.md` neu ban muon xem y nghia tung file trong do.
+
+
+## Cap nhat moi
+
+- `TestCase-GK.xlsx`: da bo sung `TC16-TC30`
+- `TESTCASE-BO-SUNG-TC16-TC30.md`: tom tat noi dung cac testcase moi
+- `PHAN-6-AUTOMATION-TESTING.md`: cap nhat ket qua automation moi nhat `30 test / 22 pass / 8 fail`

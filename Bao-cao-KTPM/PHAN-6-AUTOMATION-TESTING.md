@@ -30,7 +30,7 @@ Ly do lua chon bo cong cu tren:
 
 ## 6.2. Cac test script da viet
 
-Bo test tu dong hien co gom 5 artefact chinh:
+Bo test tu dong hien co gom 7 artefact chinh:
 
 ### 1. `BookingValidationTest.java`
 
@@ -81,10 +81,48 @@ Duong dan: `src/test/java/com/example/QLDatVe/services/BookingTestSuite.java`
 
 Chuc nang:
 
-- Gom `BookingValidationTest` va `BookingSafetyTest` thanh mot bo test tong.
-- Giup chay mot lan de thu duoc toan bo 15 test case thay vi chay tung file rieng le.
+- Gom `BookingValidationTest`, `BookingSafetyTest`, `BookingLifecycleTest`, va `BookingValidationGapsTest` thanh mot bo test tong.
+- Giup chay mot lan de thu duoc toan bo 30 test case thay vi chay tung file rieng le.
 
-### 4. `BookingTestRunner.java`
+### 4. `BookingLifecycleTest.java`
+
+Duong dan: `src/test/java/com/example/QLDatVe/services/BookingLifecycleTest.java`
+
+Chuc nang:
+
+- Bo sung 10 test case nghiep vu va xu ly vong doi booking.
+- Bao phu cac luong:
+  - Gui email that bai nhung booking van tao thanh cong.
+  - Cron job khong co du lieu qua han.
+  - Cron job gap exception tai repository.
+  - Hai nguoi dat dong thoi nhung khac ghe.
+  - Nguoi dung huy booking thanh cong.
+  - Huy booking sai nguoi dung.
+  - Huy booking khi chuyen da khoi hanh.
+  - Admin huy booking da xac nhan.
+  - Xac nhan thanh toan MoMo thanh cong.
+  - Khong tim thay booking khi callback MoMo.
+
+### 5. `BookingValidationGapsTest.java`
+
+Duong dan: `src/test/java/com/example/QLDatVe/services/BookingValidationGapsTest.java`
+
+Chuc nang:
+
+- Bo sung 5 test case validation quan trong dang bi thieu.
+- Bao gom:
+  - `paymentMethod = null`
+  - `paymentMethod` khong hop le
+  - `seatNumbers` chua `null`
+  - `seatNumbers` chua chuoi rong
+  - `seatNumbers` gom gia tri hop le va chuoi rong
+
+Muc dich:
+
+- Bien nhung thieu sot validation thanh bang chung tu dong hoa.
+- Cac test nay hien dang `FAIL`, qua do phan anh ro cac bug nghiep vu con ton tai.
+
+### 6. `BookingTestRunner.java`
 
 Duong dan: `src/test/java/com/example/QLDatVe/services/BookingTestRunner.java`
 
@@ -101,7 +139,7 @@ Muc dich:
 
 - Ho tro demo va trinh bay ket qua kiem thu tu dong mot cach truc quan.
 
-### 5. `run-booking-automation.ps1`
+### 7. `run-booking-automation.ps1`
 
 Duong dan: `run-booking-automation.ps1`
 
@@ -156,6 +194,8 @@ Script tren se:
 ```powershell
 .\mvnw.cmd -Dtest=com.example.QLDatVe.services.BookingValidationTest test
 .\mvnw.cmd -Dtest=com.example.QLDatVe.services.BookingSafetyTest test
+.\mvnw.cmd -Dtest=com.example.QLDatVe.services.BookingLifecycleTest test
+.\mvnw.cmd -Dtest=com.example.QLDatVe.services.BookingValidationGapsTest test
 ```
 
 ### Chay bang runner de xem bao cao tong hop tren console
@@ -173,47 +213,52 @@ Sau khi chay test, ket qua co the duoc xem tai:
 
 ## 6.4. Ket qua chay tu dong
 
-Trong bo ho so hien tai, ket qua automation da duoc tong hop san trong:
+Trong bo ho so hien tai, ket qua automation moi nhat da duoc tong hop tai:
 
-- `Bao-cao-KTPM/TestReport-GK.xlsx`
-- `Bao-cao-KTPM/Bang thong ke 15TC.xlsx`
-- `Bao-cao-KTPM/TestCase-GK.xlsx`
-- `Bao-cao-KTPM/automation-artifacts/20260327-165811/summary.txt`
-- `Bao-cao-KTPM/automation-artifacts/20260327-165811/automation-console.log`
+- `Bao-cao-KTPM/TESTCASE-BO-SUNG-TC16-TC30.md`
+- `Bao-cao-KTPM/automation-artifacts/20260330-210928/summary.txt`
+- `Bao-cao-KTPM/automation-artifacts/20260330-210928/automation-console.log`
 
 Tom tat ket qua:
 
-- Tong so test case: `15`
-- So test case `PASS`: `12`
-- So test case `FAIL`: `3`
-- Ti le pass: `80%`
+- Tong so test case: `30`
+- So test case `PASS`: `22`
+- So test case `FAIL`: `8`
+- Ti le pass: `73.3%`
 
 Ket qua theo nhom:
 
 - `Validation / Exception`: `7/7 PASS`
-- `Functional & Liveness`: `4/4 PASS`
-- `Safety & Concurrency`: `1 PASS / 3 FAIL`
+- `Safety & Concurrency`: `5 PASS / 3 FAIL`
+- `Lifecycle / Cron / Cancel / Confirm`: `10/10 PASS`
+- `Validation gaps bo sung`: `0/5 PASS`
 
-Ba test case that bai:
+Tam test case that bai:
 
 1. `TC13 - Race Condition (Cash)`
 2. `TC14 - Race Condition (MoMo)`
 3. `TC15 - Overlap Booking`
+4. `TC16 - Payment Method Null`
+5. `TC17 - Payment Method Unsupported`
+6. `TC18 - Seat Contains Null`
+7. `TC19 - Seat Contains Blank`
+8. `TC20 - Seat Contains Valid And Blank`
 
 Y nghia ket qua:
 
-- He thong xu ly dung cac tinh huong `validation`, `happy path`, va `cron auto-cancel`.
+- He thong xu ly dung cac luong `happy path`, `cron auto-cancel`, `cancel booking`, `admin cancel`, va `confirm MoMo`.
 - He thong chua dam bao an toan khi xay ra truy cap dong thoi vao cung mot tai nguyen ghe.
-- Automation da phat hien ro loi nghiem trong ve `double booking`, qua do chung minh duoc rui ro nghiep vu cua module dat ve.
+- He thong van con thieu validation cho `paymentMethod` va chat luong du lieu trong `seatNumbers`.
+- Automation da phat hien ro ca bug `race condition` lan cac lo hong `input validation`, qua do mo rong gia tri cua bo test so voi phien ban ban dau.
 
 ## 6.5. Nhan xet ve automation
 
 ### Uu diem
 
-- Bo test tu dong bao phu duoc cac nhom logic quan trong nhat cua `BookingService`.
+- Bo test tu dong bao phu duoc nhieu hon cac nhom logic quan trong cua `BookingService`.
 - Co kha nang chay lai nhieu lan de kiem tra hoi quy sau moi lan sua code.
 - Dung `Mockito` de tach logic nghiep vu khoi database that, giup test nhanh va on dinh.
-- Co cac kich ban da luong mo phong sat voi loi thuc te cua he thong.
+- Co cac kich ban da luong va cac kich ban nghiep vu hoan chinh nhu huy ve, cron job, va xac nhan MoMo.
 
 ### Han che
 
@@ -230,4 +275,4 @@ Y nghia ket qua:
 
 ## Ket luan
 
-Phan kiem thu tu dong cua du an da co nen tang thuc te va phu hop voi bai toan dat ra. Bo test JUnit + Mockito hien tai da giup phat hien 3 loi nghiem trong lien quan den `race condition`, dong thoi xac nhan cac luong nghiep vu co ban van hoat dong dung. Day la mot bang chung ro rang cho gia tri cua automation testing trong viec bao ve chat luong backend cua he thong dat ve.
+Phan kiem thu tu dong cua du an da duoc mo rong dang ke so voi phien ban truoc. Bo test JUnit + Mockito hien tai da chay tong cong 30 test case, trong do co 22 case pass va 8 case fail. Cac test pass xac nhan them duoc cac luong nghiep vu quan trong nhu huy ve, xu ly cron job, loi gui email, va xac nhan MoMo. Cac test fail tiep tuc cho thay 2 nhom loi can uu tien khac phuc la `race condition` va `thieu validation dau vao`. Day la bang chung ro rang cho gia tri cua automation testing trong viec nang cao chat luong backend cua he thong dat ve.
