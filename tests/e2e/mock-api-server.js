@@ -2,6 +2,7 @@ const http = require('http');
 const { URL } = require('url');
 
 const port = Number(process.env.MOCK_API_PORT || 8081);
+const host = process.env.MOCK_API_HOST || '127.0.0.1';
 const frontendBaseUrl = process.env.FRONTEND_BASE_URL || 'http://127.0.0.1:3000';
 
 const trips = [
@@ -208,7 +209,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  const url = new URL(req.url, `http://127.0.0.1:${port}`);
+  const url = new URL(req.url, `http://${host}:${port}`);
   const { pathname } = url;
 
   if (req.method === 'OPTIONS') {
@@ -298,6 +299,6 @@ const server = http.createServer(async (req, res) => {
   sendNotFound(res);
 });
 
-server.listen(port, '127.0.0.1', () => {
-  console.log(`Mock API server is listening on http://127.0.0.1:${port}`);
+server.listen(port, host, () => {
+  console.log(`Mock API server is listening on http://${host}:${port}`);
 });

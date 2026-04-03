@@ -25,7 +25,7 @@ jobs:
         image: ${{ matrix.selenium_image }}
         ports:
           - 4444:4444
-        options: --shm-size=2g
+        options: --shm-size=2g --add-host=host.docker.internal:host-gateway
 
     steps:
       - name: Checkout source
@@ -54,6 +54,9 @@ jobs:
 
       - name: Start mock API server
         shell: bash
+        env:
+          MOCK_API_HOST: "0.0.0.0"
+          FRONTEND_BASE_URL: "http://host.docker.internal:3000"
         run: |
           nohup node tests/e2e/mock-api-server.js > mock-api.log 2>&1 &
 
@@ -63,9 +66,9 @@ jobs:
         env:
           CI: "false"
           BROWSER: "none"
-          HOST: "127.0.0.1"
+          HOST: "0.0.0.0"
           PORT: "3000"
-          REACT_APP_API_BASE_URL: "http://127.0.0.1:8081/api"
+          REACT_APP_API_BASE_URL: "http://host.docker.internal:8081/api"
         run: |
           nohup npm start > ../frontend.log 2>&1 &
 
@@ -98,7 +101,7 @@ jobs:
           ./mvnw -B \
             "-Dtest=FrontendSeleniumSmokeTest" \
             "-Dselenium.browser=${{ matrix.browser }}" \
-            "-Dselenium.baseUrl=http://127.0.0.1:3000" \
+            "-Dselenium.baseUrl=http://host.docker.internal:3000" \
             "-Dselenium.remoteUrl=http://127.0.0.1:4444" \
             test
 
