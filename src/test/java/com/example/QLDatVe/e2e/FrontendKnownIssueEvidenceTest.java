@@ -23,6 +23,12 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import javax.imageio.ImageIO;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -30,7 +36,10 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FrontendKnownIssueEvidenceTest {
 
@@ -85,6 +94,7 @@ public class FrontendKnownIssueEvidenceTest {
     @Test
     public void tc03_overlapSeatCash_shouldRejectOneBooking() throws Exception {
         resetMockState();
+        List<EvidenceShot> evidenceShots = new ArrayList<>();
 
         openTripAndSeedUser(primaryDriver, primaryWait, 1, "tc03-user-a", "tc03a@example.com");
         openTripAndSeedUser(secondaryDriver, secondaryWait, 2, "tc03-user-b", "tc03b@example.com");
@@ -94,14 +104,28 @@ public class FrontendKnownIssueEvidenceTest {
         choosePaymentMethod(primaryDriver, primaryWait, "cash");
         choosePaymentMethod(secondaryDriver, secondaryWait, "cash");
 
-        captureScenarioScreenshot(primaryDriver, "TC03", "booking", "user-a", "before-submit");
-        captureScenarioScreenshot(secondaryDriver, "TC03", "booking", "user-b", "before-submit");
+        evidenceShots.add(captureScenarioScreenshot(primaryDriver, "TC03", "booking", "user-a", "before-submit",
+                "User A | seats D1,D2 | CASH | before submit"));
+        evidenceShots.add(captureScenarioScreenshot(secondaryDriver, "TC03", "booking", "user-b", "before-submit",
+                "User B | seats D2,C2 | CASH | before submit"));
 
         boolean firstUserSucceeded = submitCashBookingAndDetectSuccess(primaryDriver, primaryWait);
         boolean secondUserSucceeded = submitCashBookingAndDetectSuccess(secondaryDriver, secondaryWait);
 
-        captureScenarioScreenshot(primaryDriver, "TC03", "booking", "user-a", "after-submit");
-        captureScenarioScreenshot(secondaryDriver, "TC03", "booking", "user-b", "after-submit");
+        evidenceShots.add(captureScenarioScreenshot(primaryDriver, "TC03", "booking", "user-a", "after-submit",
+                "User A | CASH | after submit"));
+        evidenceShots.add(captureScenarioScreenshot(secondaryDriver, "TC03", "booking", "user-b", "after-submit",
+                "User B | CASH | after submit"));
+
+        createEvidenceBundle(
+                "TC03",
+                "booking",
+                "Hai user dat tap ghe giao nhau bang CASH",
+                "Expected: chi 1 booking duoc chap nhan vi trung ghe D2.",
+                "Observed: ca hai booking deu thanh cong neu first=true va second=true. first="
+                        + firstUserSucceeded + ", second=" + secondUserSucceeded,
+                evidenceShots
+        );
 
         Assert.assertFalse(
                 "TC03 failed as expected: both bookings containing overlapping seat D2 were accepted.",
@@ -112,6 +136,7 @@ public class FrontendKnownIssueEvidenceTest {
     @Test
     public void tc02_sameSeatMomo_shouldRejectOneBooking() throws Exception {
         resetMockState();
+        List<EvidenceShot> evidenceShots = new ArrayList<>();
 
         openTripAndSeedUser(primaryDriver, primaryWait, 3, "tc02-user-a", "tc02a@example.com");
         openTripAndSeedUser(secondaryDriver, secondaryWait, 4, "tc02-user-b", "tc02b@example.com");
@@ -121,14 +146,28 @@ public class FrontendKnownIssueEvidenceTest {
         choosePaymentMethod(primaryDriver, primaryWait, "momo");
         choosePaymentMethod(secondaryDriver, secondaryWait, "momo");
 
-        captureScenarioScreenshot(primaryDriver, "TC02", "payment", "user-a", "before-submit");
-        captureScenarioScreenshot(secondaryDriver, "TC02", "payment", "user-b", "before-submit");
+        evidenceShots.add(captureScenarioScreenshot(primaryDriver, "TC02", "payment", "user-a", "before-submit",
+                "User A | seat A2 | MOMO | before submit"));
+        evidenceShots.add(captureScenarioScreenshot(secondaryDriver, "TC02", "payment", "user-b", "before-submit",
+                "User B | seat A2 | MOMO | before submit"));
 
         boolean firstUserReachedSuccess = submitMomoBookingAndReachPaymentSuccess(primaryDriver, primaryWait);
         boolean secondUserReachedSuccess = submitMomoBookingAndReachPaymentSuccess(secondaryDriver, secondaryWait);
 
-        captureScenarioScreenshot(primaryDriver, "TC02", "payment", "user-a", "after-submit");
-        captureScenarioScreenshot(secondaryDriver, "TC02", "payment", "user-b", "after-submit");
+        evidenceShots.add(captureScenarioScreenshot(primaryDriver, "TC02", "payment", "user-a", "after-submit",
+                "User A | MOMO | payment success"));
+        evidenceShots.add(captureScenarioScreenshot(secondaryDriver, "TC02", "payment", "user-b", "after-submit",
+                "User B | MOMO | payment success"));
+
+        createEvidenceBundle(
+                "TC02",
+                "payment",
+                "Hai user dat cung 1 ghe bang MOMO",
+                "Expected: chi 1 user duoc thanh toan thanh cong cho ghe A2.",
+                "Observed: ca hai user deu toi payment success neu first=true va second=true. first="
+                        + firstUserReachedSuccess + ", second=" + secondUserReachedSuccess,
+                evidenceShots
+        );
 
         Assert.assertFalse(
                 "TC02 failed as expected: both users reached MOMO success for the same seat A2.",
@@ -139,6 +178,7 @@ public class FrontendKnownIssueEvidenceTest {
     @Test
     public void tc24_differentSeatsCash_shouldAllowBothBookings() throws Exception {
         resetMockState();
+        List<EvidenceShot> evidenceShots = new ArrayList<>();
 
         openTripAndSeedUser(primaryDriver, primaryWait, 5, "tc24-user-a", "tc24a@example.com");
         openTripAndSeedUser(secondaryDriver, secondaryWait, 6, "tc24-user-b", "tc24b@example.com");
@@ -148,14 +188,27 @@ public class FrontendKnownIssueEvidenceTest {
         choosePaymentMethod(primaryDriver, primaryWait, "cash");
         choosePaymentMethod(secondaryDriver, secondaryWait, "cash");
 
-        captureScenarioScreenshot(primaryDriver, "TC24", "booking", "user-a", "before-submit");
-        captureScenarioScreenshot(secondaryDriver, "TC24", "booking", "user-b", "before-submit");
+        evidenceShots.add(captureScenarioScreenshot(primaryDriver, "TC24", "booking", "user-a", "before-submit",
+                "User A | seat A2 | CASH | before submit"));
+        evidenceShots.add(captureScenarioScreenshot(secondaryDriver, "TC24", "booking", "user-b", "before-submit",
+                "User B | seat C1 | CASH | before submit"));
 
         boolean firstUserSucceeded = submitCashBookingAndDetectSuccess(primaryDriver, primaryWait);
         boolean secondUserSucceeded = submitCashBookingAndDetectSuccess(secondaryDriver, secondaryWait);
 
-        captureScenarioScreenshot(primaryDriver, "TC24", "booking", "user-a", "after-submit");
-        captureScenarioScreenshot(secondaryDriver, "TC24", "booking", "user-b", "after-submit");
+        evidenceShots.add(captureScenarioScreenshot(primaryDriver, "TC24", "booking", "user-a", "after-submit",
+                "User A | CASH | after submit"));
+        evidenceShots.add(captureScenarioScreenshot(secondaryDriver, "TC24", "booking", "user-b", "after-submit",
+                "User B | CASH | after submit"));
+
+        createEvidenceBundle(
+                "TC24",
+                "booking",
+                "Hai user dat dong thoi nhung khac ghe bang CASH",
+                "Expected: ca hai user deu dat thanh cong vi khong trung ghe.",
+                "Observed: first=" + firstUserSucceeded + ", second=" + secondUserSucceeded,
+                evidenceShots
+        );
 
         Assert.assertTrue(
                 "TC24 should pass: two users booking different seats must both succeed.",
@@ -291,18 +344,20 @@ public class FrontendKnownIssueEvidenceTest {
         captureScreenshot(secondaryDriver, "fail", scenario, component, testName + "-user-b-FAIL");
     }
 
-    private void captureScenarioScreenshot(WebDriver driver,
-                                           String scenario,
-                                           String component,
-                                           String actor,
-                                           String checkpoint) {
+    private EvidenceShot captureScenarioScreenshot(WebDriver driver,
+                                                   String scenario,
+                                                   String component,
+                                                   String actor,
+                                                   String checkpoint,
+                                                   String humanLabel) {
         String label = String.format("%02d-%s-%s-%s", screenshotCounter++, scenario, actor, checkpoint);
-        captureScreenshot(driver, "pass", scenario, component, label);
+        Path savedPath = captureScreenshot(driver, "pass", scenario, component, label);
+        return new EvidenceShot(savedPath, humanLabel);
     }
 
-    private void captureScreenshot(WebDriver driver, String status, String scenario, String component, String label) {
+    private Path captureScreenshot(WebDriver driver, String status, String scenario, String component, String label) {
         if (driver == null || !(driver instanceof TakesScreenshot)) {
-            return;
+            return null;
         }
 
         try {
@@ -323,8 +378,10 @@ public class FrontendKnownIssueEvidenceTest {
             Files.copy(tempScreenshot, screenshotPath, StandardCopyOption.REPLACE_EXISTING);
 
             System.out.println("Saved Selenium screenshot to: " + screenshotPath.toAbsolutePath());
+            return screenshotPath;
         } catch (Exception exception) {
             System.err.println("Unable to capture Selenium screenshot: " + exception.getMessage());
+            return null;
         }
     }
 
@@ -358,5 +415,109 @@ public class FrontendKnownIssueEvidenceTest {
             return "TC24";
         }
         return "unknown";
+    }
+
+    private void createEvidenceBundle(String scenario,
+                                      String component,
+                                      String title,
+                                      String expected,
+                                      String observed,
+                                      List<EvidenceShot> shots) throws Exception {
+        Path evidenceDirectory = Path.of("target", "selenium-screenshots", "evidence", scenario, component);
+        Files.createDirectories(evidenceDirectory);
+
+        StringBuilder summary = new StringBuilder();
+        summary.append("Scenario: ").append(scenario).append(System.lineSeparator());
+        summary.append("Title: ").append(title).append(System.lineSeparator());
+        summary.append("Expected: ").append(expected).append(System.lineSeparator());
+        summary.append("Observed: ").append(observed).append(System.lineSeparator());
+        summary.append("Screenshots:").append(System.lineSeparator());
+
+        for (EvidenceShot shot : shots) {
+            if (shot != null && shot.path != null) {
+                summary.append("- ").append(shot.label).append(" => ").append(shot.path.getFileName()).append(System.lineSeparator());
+            }
+        }
+
+        Files.writeString(
+                evidenceDirectory.resolve(scenario + "-summary.txt"),
+                summary.toString(),
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING,
+                StandardOpenOption.WRITE
+        );
+
+        createCollageImage(evidenceDirectory.resolve(scenario + "-collage.png"), scenario, title, expected, observed, shots);
+    }
+
+    private void createCollageImage(Path outputPath,
+                                    String scenario,
+                                    String title,
+                                    String expected,
+                                    String observed,
+                                    List<EvidenceShot> shots) throws Exception {
+        int headerHeight = 180;
+        int labelHeight = 36;
+        int tileWidth = 620;
+        int tileHeight = 360;
+        int columns = 2;
+        int rows = Math.max(1, (int) Math.ceil(shots.size() / 2.0));
+        int canvasWidth = columns * tileWidth;
+        int canvasHeight = headerHeight + rows * (tileHeight + labelHeight);
+
+        BufferedImage canvas = new BufferedImage(canvasWidth, canvasHeight, BufferedImage.TYPE_INT_RGB);
+        Graphics2D graphics = canvas.createGraphics();
+        graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+
+        graphics.setColor(Color.WHITE);
+        graphics.fillRect(0, 0, canvasWidth, canvasHeight);
+
+        graphics.setColor(new Color(28, 43, 56));
+        graphics.setFont(new Font("Arial", Font.BOLD, 26));
+        graphics.drawString(scenario + " - " + title, 20, 40);
+
+        graphics.setFont(new Font("Arial", Font.PLAIN, 18));
+        graphics.drawString(expected, 20, 78);
+        graphics.drawString(observed, 20, 108);
+        graphics.drawString("Proof bundle: user A + user B, before/after submit, same scenario.", 20, 138);
+
+        for (int index = 0; index < shots.size(); index++) {
+            EvidenceShot shot = shots.get(index);
+            if (shot == null || shot.path == null || !Files.exists(shot.path)) {
+                continue;
+            }
+
+            int row = index / columns;
+            int col = index % columns;
+            int x = col * tileWidth;
+            int y = headerHeight + row * (tileHeight + labelHeight);
+
+            BufferedImage image = ImageIO.read(shot.path.toFile());
+            if (image == null) {
+                continue;
+            }
+
+            graphics.setColor(new Color(245, 245, 245));
+            graphics.fillRect(x, y, tileWidth, tileHeight + labelHeight);
+            graphics.drawImage(image, x + 10, y + 10, tileWidth - 20, tileHeight - 20, null);
+
+            graphics.setColor(new Color(28, 43, 56));
+            graphics.setFont(new Font("Arial", Font.BOLD, 16));
+            graphics.drawString(shot.label, x + 12, y + tileHeight + 20);
+        }
+
+        graphics.dispose();
+        ImageIO.write(canvas, "png", outputPath.toFile());
+    }
+
+    private static class EvidenceShot {
+        private final Path path;
+        private final String label;
+
+        private EvidenceShot(Path path, String label) {
+            this.path = path;
+            this.label = label;
+        }
     }
 }
