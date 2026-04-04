@@ -94,14 +94,14 @@ public class FrontendKnownIssueEvidenceTest {
         choosePaymentMethod(primaryDriver, primaryWait, "cash");
         choosePaymentMethod(secondaryDriver, secondaryWait, "cash");
 
-        captureCheckpointScreenshot(primaryDriver, "booking", "TC03-before-submit-user-a");
-        captureCheckpointScreenshot(secondaryDriver, "booking", "TC03-before-submit-user-b");
+        captureScenarioScreenshot(primaryDriver, "TC03", "booking", "user-a", "before-submit");
+        captureScenarioScreenshot(secondaryDriver, "TC03", "booking", "user-b", "before-submit");
 
         boolean firstUserSucceeded = submitCashBookingAndDetectSuccess(primaryDriver, primaryWait);
         boolean secondUserSucceeded = submitCashBookingAndDetectSuccess(secondaryDriver, secondaryWait);
 
-        captureCheckpointScreenshot(primaryDriver, "booking", "TC03-after-submit-user-a");
-        captureCheckpointScreenshot(secondaryDriver, "booking", "TC03-after-submit-user-b");
+        captureScenarioScreenshot(primaryDriver, "TC03", "booking", "user-a", "after-submit");
+        captureScenarioScreenshot(secondaryDriver, "TC03", "booking", "user-b", "after-submit");
 
         Assert.assertFalse(
                 "TC03 failed as expected: both bookings containing overlapping seat D2 were accepted.",
@@ -121,14 +121,14 @@ public class FrontendKnownIssueEvidenceTest {
         choosePaymentMethod(primaryDriver, primaryWait, "momo");
         choosePaymentMethod(secondaryDriver, secondaryWait, "momo");
 
-        captureCheckpointScreenshot(primaryDriver, "payment", "TC02-before-submit-user-a");
-        captureCheckpointScreenshot(secondaryDriver, "payment", "TC02-before-submit-user-b");
+        captureScenarioScreenshot(primaryDriver, "TC02", "payment", "user-a", "before-submit");
+        captureScenarioScreenshot(secondaryDriver, "TC02", "payment", "user-b", "before-submit");
 
         boolean firstUserReachedSuccess = submitMomoBookingAndReachPaymentSuccess(primaryDriver, primaryWait);
         boolean secondUserReachedSuccess = submitMomoBookingAndReachPaymentSuccess(secondaryDriver, secondaryWait);
 
-        captureCheckpointScreenshot(primaryDriver, "payment", "TC02-after-submit-user-a");
-        captureCheckpointScreenshot(secondaryDriver, "payment", "TC02-after-submit-user-b");
+        captureScenarioScreenshot(primaryDriver, "TC02", "payment", "user-a", "after-submit");
+        captureScenarioScreenshot(secondaryDriver, "TC02", "payment", "user-b", "after-submit");
 
         Assert.assertFalse(
                 "TC02 failed as expected: both users reached MOMO success for the same seat A2.",
@@ -148,14 +148,14 @@ public class FrontendKnownIssueEvidenceTest {
         choosePaymentMethod(primaryDriver, primaryWait, "cash");
         choosePaymentMethod(secondaryDriver, secondaryWait, "cash");
 
-        captureCheckpointScreenshot(primaryDriver, "booking", "TC24-before-submit-user-a");
-        captureCheckpointScreenshot(secondaryDriver, "booking", "TC24-before-submit-user-b");
+        captureScenarioScreenshot(primaryDriver, "TC24", "booking", "user-a", "before-submit");
+        captureScenarioScreenshot(secondaryDriver, "TC24", "booking", "user-b", "before-submit");
 
         boolean firstUserSucceeded = submitCashBookingAndDetectSuccess(primaryDriver, primaryWait);
         boolean secondUserSucceeded = submitCashBookingAndDetectSuccess(secondaryDriver, secondaryWait);
 
-        captureCheckpointScreenshot(primaryDriver, "booking", "TC24-after-submit-user-a");
-        captureCheckpointScreenshot(secondaryDriver, "booking", "TC24-after-submit-user-b");
+        captureScenarioScreenshot(primaryDriver, "TC24", "booking", "user-a", "after-submit");
+        captureScenarioScreenshot(secondaryDriver, "TC24", "booking", "user-b", "after-submit");
 
         Assert.assertTrue(
                 "TC24 should pass: two users booking different seats must both succeed.",
@@ -285,18 +285,22 @@ public class FrontendKnownIssueEvidenceTest {
     }
 
     private void captureFailureScreenshots(String testName) {
+        String scenario = inferScenarioFromTestName(testName);
         String component = inferComponentFromTestName(testName);
-        captureScreenshot(primaryDriver, "fail", component, testName + "-primary-FAIL");
-        captureScreenshot(secondaryDriver, "fail", component, testName + "-secondary-FAIL");
+        captureScreenshot(primaryDriver, "fail", scenario, component, testName + "-user-a-FAIL");
+        captureScreenshot(secondaryDriver, "fail", scenario, component, testName + "-user-b-FAIL");
     }
 
-    private void captureCheckpointScreenshot(WebDriver driver, String component, String checkpoint) {
-        String testMethod = currentTestName.getMethodName() == null ? "unknown-test" : currentTestName.getMethodName();
-        String label = String.format("%02d-%s-%s", screenshotCounter++, testMethod, checkpoint);
-        captureScreenshot(driver, "pass", component, label);
+    private void captureScenarioScreenshot(WebDriver driver,
+                                           String scenario,
+                                           String component,
+                                           String actor,
+                                           String checkpoint) {
+        String label = String.format("%02d-%s-%s-%s", screenshotCounter++, scenario, actor, checkpoint);
+        captureScreenshot(driver, "pass", scenario, component, label);
     }
 
-    private void captureScreenshot(WebDriver driver, String status, String component, String label) {
+    private void captureScreenshot(WebDriver driver, String status, String scenario, String component, String label) {
         if (driver == null || !(driver instanceof TakesScreenshot)) {
             return;
         }
@@ -306,6 +310,7 @@ public class FrontendKnownIssueEvidenceTest {
                     "target",
                     "selenium-screenshots",
                     sanitizeForFileName(status),
+                    sanitizeForFileName(scenario),
                     sanitizeForFileName(component));
             Files.createDirectories(screenshotDirectory);
 
@@ -336,5 +341,22 @@ public class FrontendKnownIssueEvidenceTest {
             return "payment";
         }
         return "booking";
+    }
+
+    private String inferScenarioFromTestName(String testName) {
+        if (testName == null || testName.isBlank()) {
+            return "unknown";
+        }
+        String normalized = testName.toLowerCase();
+        if (normalized.contains("tc02")) {
+            return "TC02";
+        }
+        if (normalized.contains("tc03")) {
+            return "TC03";
+        }
+        if (normalized.contains("tc24")) {
+            return "TC24";
+        }
+        return "unknown";
     }
 }
