@@ -1,19 +1,21 @@
-package com.example.QLDatVe.regression;
+package com.example.QLDatVe.functional;
 
-import com.example.QLDatVe.security.SecurityAccessIntegrationTest;
 import com.example.QLDatVe.services.BookingLifecycleTest;
+import com.example.QLDatVe.services.BookingSafetyTest;
+import com.example.QLDatVe.services.BookingValidationGapsTest;
 import com.example.QLDatVe.services.BookingValidationTest;
 import com.example.QLDatVe.support.SuiteAssertions;
 import org.junit.Test;
 
-public class RegressionStableSuite {
+public class FunctionalTestingSuite {
 
     @Test
-    public void regressionStableSuiteShouldPass() {
+    public void functionalTestingSuiteShouldPass() {
         SuiteAssertions.assertClassesPass(
                 BookingValidationTest.class,
+                BookingSafetyTest.class,
                 BookingLifecycleTest.class,
-                SecurityAccessIntegrationTest.class
+                BookingValidationGapsTest.class
         );
     }
 }

@@ -272,3 +272,25 @@ Neu viet bao cao Word o buoc sau, uu tien:
 2. Dien noi dung bam cac file bang chung o tren.
 3. O cac muc chua co bang chung, ghi ro "chua thuc hien / ngoai pham vi".
 4. Neu can lam ro phan TLA+, phai xin them file dac ta hoac thong tin ngoai repo truoc khi viet nhu mot bang chung chinh thuc.
+
+## Hiện vật Chương 5 JUnit + Mock
+- `Bảng thống kê 40TC.xlsx`
+- `Bảng thống kê Chương 5 JUnit Mock.xlsx`
+- `BÁO CÁO TÓM TẮT KIỂM THỬ - Chương 5.docx`
+- `CÁC TRƯỜNG HỢP KIỂM THỬ - Chương 5.docx`
+- `Test Case ID - Chương 5.docx`
+
+
+## Hiện vật Chương 6 Automation
+- `Bảng thống kê Chương 6 Automation.xlsx`
+- `TestCase_Chuong6_Automation.xlsx`
+- `TestReport.xlsx`
+- `Chuong6_KiemThuTuDong_Automation.docx`
+- `Chuong6_KiemThuTuDong_Automation.md`
+
+
+## Hiện vật Chương 7 và Chương 8
+- `Bảng thống kê Chương 7 Bug Report.xlsx`
+- `TestReport.xlsx`
+- `Chuong7_BaoCaoLoi.docx`
+- `Chuong8_TongKetVaDanhGia.docx`

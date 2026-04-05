@@ -1,14 +1,17 @@
 package com.example.QLDatVe.services;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+import com.example.QLDatVe.support.SuiteAssertions;
+import org.junit.Test;
 
-@RunWith(Suite.class)
-@Suite.SuiteClasses({
-        BookingValidationTest.class,
-        BookingSafetyTest.class,
-        BookingLifecycleTest.class,
-        BookingValidationGapsTest.class
-})
 public class BookingTestSuite {
+
+    @Test
+    public void bookingTestSuiteShouldRunUnderlyingServiceTests() {
+        SuiteAssertions.assertClassesPass(
+                BookingValidationTest.class,
+                BookingSafetyTest.class,
+                BookingLifecycleTest.class,
+                BookingValidationGapsTest.class
+        );
+    }
 }
